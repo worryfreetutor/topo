@@ -13,8 +13,8 @@
     </RadioGroup>
     <br>
     <!-- 输入文本框 -->
-    <Input v-model="inputText" v-show="inputType === 'text'" 
-      type="textarea" :autosize="{minRows: 2,maxRows: 6}" placeholder="请按格式输入数据..." 
+    <Input v-model="inputText" v-show="inputType === 'text'"
+      type="textarea" :autosize="{minRows: 2,maxRows: 6}" placeholder="请按格式输入数据..."
       @on-blur="checkInputText"
     />
     <!-- 上传文件框 -->
@@ -29,18 +29,23 @@
         <p>点击或将文件拖拽到这里上传</p>
       </div>
     </Upload>
+    <b>关系图如下</b>
+    <Card style="width:100%">
+      <div id="graph" style="width:100%;height:600px"></div>
+    </Card>
     <b>result: {{ relationStr }}</b>
     <br>
     <!-- 输出文本框 -->
     <Input v-model="result" readonly type="textarea" :autosize="{minRows: 2,maxRows: 6}" placeholder="输出结果"/>
     <br>
     <!-- 导出文件按钮 -->
-    <Button size="large" icon="ios-download-outline" type="primary" 
+    <Button size="large" icon="ios-download-outline" type="primary"
       v-show="relationStr !== ''" shape="circle" @click="downloadFile"></Button>
   </div>
 </template>
 
 <script>
+  import echarts from "echarts"
 export default {
   name: 'HelloWorld',
   data() {
@@ -62,6 +67,8 @@ export default {
           })
         } else {
           this.relationStr = val;
+          // 初始化关系表
+          this.initEcharts(val)
         }
       }
     },
@@ -80,9 +87,99 @@ export default {
           })
         } else {
           this.relationStr = val;
+          // 初始化关系表
+          this.initEcharts(val)
         }
       }
       return false;
+    },
+    // 初始化图表
+    initEcharts(val){
+      // 处理数据为绘图需要的格式
+      const {data , links} = this.organizeData(val)
+      const myChart = echarts.init(document.getElementById("graph"))
+      const option = {
+        title: {
+          text: '关系图'
+        },
+        tooltip: {},
+        toolbox:{
+          show: true,
+          feature: {
+            restore: {},
+            saveAsImage: {}
+          }
+        },
+        animationDurationUpdate: 1500,
+        animationEasingUpdate: 'quinticInOut',
+        series : [
+          {
+            type: 'graph',
+            layout: 'force',
+            symbolSize: 50,
+            roam: true,
+            label: {
+              normal: {
+                fontSize:20,
+                show: true,
+              }
+            },
+            // 圆圈的背景颜色
+            itemStyle:{
+              color:'#F4606C'
+            },
+            edgeSymbol: ['circle', 'arrow'],
+            edgeSymbolSize: 10,
+            edgeLabel: {
+              normal: {
+                textStyle: {
+                  fontSize: 20
+                }
+              }
+            },
+            force: {
+              repulsion: 2500,
+              edgeLength: 500
+            },
+            data: data,
+            // links: [],
+            links: links,
+            lineStyle: {
+              normal: {
+                opacity: 0.9,
+                width: 4,
+                curveness: 0
+              }
+            }
+          }
+        ]
+      };
+      myChart.setOption(option);
+    },
+    // 格式化数据
+    organizeData(val){
+      const temp = val.split(' ')
+      let links = []
+      let set = new Set()
+      let data = []
+      // 组装links-结点之间的关系
+      temp.forEach(ele =>{
+        let source = ele.match(/<(\S*),/)[1]
+        let target = ele.match(/,(\S*)>/)[1]
+        set.add(source)
+        set.add(target)
+        links.push({
+          source,
+          target
+        })
+      })
+      // 组装data-多少个结点
+      set.forEach(ele => {
+        data.push({
+          name:ele
+        })
+      })
+      return {data,links}
     },
     // 校验输入格式
     checkInput(input) {
