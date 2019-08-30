@@ -20,6 +20,7 @@
     <!-- 上传文件框 -->
     <Upload
       type="drag"
+      accept=".txt,.dat"
       action=""
       :before-upload="uploadFile"
       v-show="inputType === 'file'"
@@ -29,6 +30,7 @@
         <p>点击或将文件拖拽到这里上传</p>
       </div>
     </Upload>
+    <!-- 关系图 -->
     <b>关系图如下</b>
     <Card style="width:100%">
       <div id="graph" style="width:100%;height:600px"></div>
