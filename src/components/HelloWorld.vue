@@ -37,8 +37,21 @@
     </Card>
     <b>result: {{ relationStr }}</b>
     <br>
-    <!-- 输出文本框 -->
-    <Input v-model="result" readonly type="textarea" :autosize="{minRows: 2,maxRows: 6}" placeholder="输出结果"/>
+    <!-- 选择高亮显示课程名 -->
+    <Select v-model="highLight" clearable style="width:200px">
+      <Option v-for="item in courseList" :value="item" :key="item">{{ item }}</Option>
+    </Select>
+    <br>
+    <b>{{ highLight }}</b>
+    <br>
+    <!-- 输出文本框(高亮显示) -->
+    <div>
+      <div v-for="(item, index) in result" :key="index"  @click="showCoursePath(index)" style="cursor: pointer;">
+        <font>{{ item.split(highLight)[0] }}</font>
+        <font v-show="item.indexOf(highLight) !== -1"  style="color: red;">{{ highLight }}</font>
+        <font>{{ item.split(highLight)[1] }}</font>
+      </div>
+    </div>
     <br>
     <!-- 导出文件按钮 -->
     <Button size="large" icon="ios-download-outline" type="primary"
@@ -55,7 +68,18 @@ export default {
       inputText: '',  // 输入框输入的内容
       inputType: 'text',  // text or file 输入的类型
       relationStr: '',  // 经过处理的节点关系数据
-      result: '2141514h'  // 结果数据
+      result: [
+        'a->b->c',
+        'd->e->f'
+      ],  // 结果数组
+      // 不会起变量名 T_T
+      courseList: [
+        'a',
+        'b',
+        'c'
+      ],  // 所有课程的数组
+      highLight: ' ',  // 高亮显示的课程名，初始值为空格!
+      showPathIndex: -1,  // 可视化展示的路径的下标，初始值为-1?
     }
   },
   methods: {
@@ -196,7 +220,8 @@ export default {
     // 导出文件
     downloadFile() {
       if ('download' in document.createElement('a')) {
-        this.download(this.relationStr, 'test.txt');
+        const fileData = this.result.join('\n');
+        this.download(fileData, 'test.txt');
       } else {
         this.$Notice.error({
           title: '出错了!!!'
@@ -212,6 +237,10 @@ export default {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    },
+    // 点击显示路径图的下标
+    showCoursePath(index) {
+      this.showPathIndex = index;
     }
   }
 }
