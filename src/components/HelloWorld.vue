@@ -46,7 +46,7 @@
     <br>
     <!-- 输出文本框(高亮显示) -->
     <div>
-      <div v-for="(item, index) in result" :key="index"  @click="showCoursePath(index)" style="cursor: pointer;">
+      <div v-for="(item, index) in result" :key="index"  @click="showPathGraph(index)" style="cursor: pointer;">
         <font>{{ item.split(highLight)[0] }}</font>
         <font v-show="item.indexOf(highLight) !== -1"  style="color: red;">{{ highLight }}</font>
         <font>{{ item.split(highLight)[1] }}</font>
@@ -56,6 +56,10 @@
     <!-- 导出文件按钮 -->
     <Button size="large" icon="ios-download-outline" type="primary"
       v-show="relationStr !== ''" shape="circle" @click="downloadFile"></Button>
+    <b>路径图如下</b>
+    <Card style="width:100%">
+      <div id="roadmap" style="width:100%;height:600px"></div>
+    </Card>
   </div>
 </template>
 
@@ -73,13 +77,10 @@ export default {
         'd->e->f'
       ],  // 结果数组
       // 不会起变量名 T_T
-      courseList: [
-        'a',
-        'b',
-        'c'
-      ],  // 所有课程的数组
+      courseList: [], // 所有课程的数组
       highLight: ' ',  // 高亮显示的课程名，初始值为空格!
-      showPathIndex: -1,  // 可视化展示的路径的下标，初始值为-1?
+      showPathIndex: -1,  // 楚煜大佬：可视化展示的路径的下标，初始值为-1? 小麦 ： ojbk，为楚煜大佬端茶递水。
+      map: new Map() //使用全局变量map做键值对，实现数据和课程名字对应起来
     }
   },
   methods: {
@@ -128,7 +129,9 @@ export default {
         title: {
           text: '关系图'
         },
-        tooltip: {},
+        tooltip: {
+          formatter: '{b0}: {c0}'
+        },
         toolbox:{
           show: true,
           feature: {
@@ -186,25 +189,53 @@ export default {
     organizeData(val){
       const temp = val.split(' ')
       let links = []
-      let set = new Set()
+      // let set = new Set()
       let data = []
       // 组装links-结点之间的关系
-      temp.forEach(ele =>{
+      // temp.forEach(ele =>{
+      //   let source = ele.match(/<(\S*),/)[1]
+      //   let target = ele.match(/,(\S*)>/)[1]
+      //   set.add(source)
+      //   set.add(target)
+      //   links.push({
+      //     source,
+      //     target
+      //   })
+      // })
+      let num = 1
+      this.map = new Map() // 初始化全局变量map
+      let map = this.map
+      temp.forEach(ele => {
         let source = ele.match(/<(\S*),/)[1]
         let target = ele.match(/,(\S*)>/)[1]
-        set.add(source)
-        set.add(target)
+        if(!this.map.has(source)){
+          this.map.set(source,num++ + '')
+        }
+        if(!this.map.has(target)){
+          map.set(target,num++ + '')
+        }
         links.push({
-          source,
-          target
+          source:map.get(source),
+          target:map.get(target)
         })
       })
+      this.courseList = [] // 清空全局存储结点数组
       // 组装data-多少个结点
-      set.forEach(ele => {
+      map.forEach((value,key)=>{
         data.push({
-          name:ele
+          name:value,
+          value: key
         })
+        this.courseList.push(key)
       })
+      // let i = 1 // 结点代号，防止名字课程的名字过长。
+      // set.forEach(ele => {
+      //   data.push({
+      //     name: i++,
+      //     value: ele
+      //   })
+      //   this.courseList.push(ele)
+      // })
       return {data,links}
     },
     // 校验输入格式
@@ -239,8 +270,90 @@ export default {
       document.body.removeChild(link);
     },
     // 点击显示路径图的下标
-    showCoursePath(index) {
+    showPathGraph(index) {
       this.showPathIndex = index;
+      const {data,links} = this.organizeResult()  // 由于有showPathIndex全局变量，我们这里不用传参数（写给林总看的）
+      const myChart = echarts.init(document.getElementById("roadmap"))
+      const option = {
+        title: {
+          text: '路径图'
+        },
+        tooltip: {
+          formatter: '{b0}: {c0}'
+        },
+        toolbox:{
+          show: true,
+          feature: {
+            restore: {},
+            saveAsImage: {}
+          }
+        },
+        animationDurationUpdate: 1500,
+        animationEasingUpdate: 'quinticInOut',
+        series : [
+          {
+            type: 'graph',
+            layout: 'force',
+            symbolSize: 50,
+            roam: true,
+            label: {
+              normal: {
+                fontSize:20,
+                show: true,
+              }
+            },
+            // 圆圈的背景颜色
+            itemStyle:{
+              color:'#F4606C'
+            },
+            edgeSymbol: ['circle', 'arrow'],
+            edgeSymbolSize: 10,
+            edgeLabel: {
+              normal: {
+                textStyle: {
+                  fontSize: 20
+                }
+              }
+            },
+            force: {
+              repulsion: 2500,
+              edgeLength: 500
+            },
+            data: data,
+            // links: [],
+            links: links,
+            lineStyle: {
+              normal: {
+                opacity: 0.9,
+                width: 4,
+                curveness: 0
+              }
+            }
+          }
+        ]
+      };
+      myChart.setOption(option);
+    },
+    // 处理排序后的结果，返回绘图需要的数据格式
+    organizeResult(){
+      let links = []
+      let data = []
+      const unformattedata = this.result[this.showPathIndex]
+      const temp = unformattedata.split('->')
+      // 遍历temp数组，获取结点之间的关系
+      for(let i = 0 ; i<temp.length - 1; i++){
+        links.push({
+          source:this.map.get(temp[i]),
+          target:this.map.get(temp[i+1])
+        })
+      }
+      temp.forEach( ele => {
+        data.push({
+          name:this.map.get(ele),
+          value:ele
+        })
+      })
+      return {data,links}
     }
   }
 }
