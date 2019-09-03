@@ -47,9 +47,9 @@
     <!-- 输出文本框(高亮显示) -->
     <div>
       <div v-for="(item, index) in result" :key="index"  @click="showPathGraph(index)" style="cursor: pointer;">
-        <font>{{ item.split(highLight)[0] }}</font>
-        <font v-show="item.indexOf(highLight) !== -1"  style="color: red;">{{ highLight }}</font>
-        <font>{{ item.split(highLight)[1] }}</font>
+        <font>{{ item[0].split(highLight)[0] }}</font>
+        <font v-show="item[0].indexOf(highLight) !== -1"  style="color: red;">{{ highLight }}</font>
+        <font>{{ item[0].split(highLight)[1] }}</font>
       </div>
     </div>
     <br>
@@ -65,6 +65,7 @@
 
 <script>
   import echarts from "echarts"
+  import {get} from './topo.js'
 export default {
   name: 'HelloWorld',
   data() {
@@ -96,6 +97,8 @@ export default {
           this.relationStr = val;
           // 初始化关系表
           this.initEcharts(val)
+          // 拓扑排序
+          this.result = get(val)
         }
       }
     },
@@ -116,6 +119,8 @@ export default {
           this.relationStr = val;
           // 初始化关系表
           this.initEcharts(val)
+          // 拓扑排序
+          this.result = get(val)
         }
       }
       return false;
@@ -338,7 +343,7 @@ export default {
     organizeResult(){
       let links = []
       let data = []
-      const unformattedata = this.result[this.showPathIndex]
+      const unformattedata = this.result[this.showPathIndex][0]
       const temp = unformattedata.split('->')
       // 遍历temp数组，获取结点之间的关系
       for(let i = 0 ; i<temp.length - 1; i++){
