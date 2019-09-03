@@ -95,10 +95,15 @@ export default {
           })
         } else {
           this.relationStr = val;
-          // 初始化关系表
-          this.initEcharts(val)
+          // // 初始化关系表
+          // this.initEcharts(val)
+
           // 拓扑排序
           this.result = get(val)
+          if(this.result){
+            // 初始化关系表
+            this.initEcharts(val)
+          }
         }
       }
     },
@@ -117,10 +122,16 @@ export default {
           })
         } else {
           this.relationStr = val;
-          // 初始化关系表
-          this.initEcharts(val)
+          // // 初始化关系表
+          // this.initEcharts(val)
+          // // 拓扑排序
+          // this.result = get(val)
           // 拓扑排序
           this.result = get(val)
+          if(this.result){
+            // 初始化关系表
+            this.initEcharts(val)
+          }
         }
       }
       return false;

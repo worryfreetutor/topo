@@ -114,10 +114,11 @@ function get(key){                       // 构建邻接表
         graph.arcnum++;
         graph.adjMatrix[name1].push(name2);
     }
-    topo();
+    var IsTopo=topo();
     // printAll();
-
-    return final_path;
+    if (IsTopo)
+        return final_path;
+    else return false;
 }
 
 var ArrayQueue;
@@ -327,10 +328,12 @@ function topo()  // 拓扑排序
 {
     if (toposort()) {//无环，可进行拓扑排序
         //alert("无环");
-        findAll();
+        findAll()
+        return true;
 	}
 	else {  //有环
 		alert("该有向图有环存在！");
+		return false;
 	}
 }
 export{
